@@ -2,7 +2,7 @@ import math
 from django.urls import reverse
 from django.db import models
 from django.core.validators import MaxValueValidator, MinValueValidator, RegexValidator
-import datetime
+from datetime import datetime, time, date, timedelta
 
 # Create your models here.
 
@@ -23,9 +23,9 @@ class Patient(models.Model):
   phone       = models.CharField(max_length=10, validators=[RegexValidator(r'^[0-9]+$')])
   
   def age(self):
-    today = datetime.date.today()
+    today = date.today()
     delta = today - self.birthday 
-    year = datetime.timedelta(days = 365)
+    year = timedelta(days = 365)
     age = math.trunc(delta / year)
     return age
 
@@ -85,3 +85,27 @@ class Doctor(models.Model):
         days_str += el + ', '
     return days_str[0:-2]
 
+
+class Appointment(models.Model):
+  patient_id      = models.CharField(max_length=3)
+  patient_name    = models.CharField(max_length=70)
+  doctor_id       = models.CharField(max_length=3)
+  doctor_name     = models.CharField(max_length=70)
+  date            = models.DateField()
+  time            = models.TimeField()
+  notes           = models.TextField(blank=True, null=True)
+
+
+  def status(self):
+    date_now = datetime.now().date()
+    time_now = datetime.now().time()
+    if self.date >= date_now and self.time > time_now:
+      return 'Upcoming'
+    else:
+      return 'Completed'
+  
+  def formatted_time(self):
+    parsed = time.fromisoformat(str(self.time))
+    formatted = parsed.strftime("%I:%M %p")
+    return formatted
+    

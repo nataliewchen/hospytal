@@ -46,6 +46,11 @@ main {
   background-color: rgba(25, 118, 210, 0.08) !important;
 }
 
+.MuiAutocomplete-option:hover {
+  cursor: pointer;
+  background-color: rgba(25, 118, 210, 0.08) !important;
+}
+
 .form-grid > .MuiGrid-item {
   padding: 0 5px 20px !important;
 }
@@ -53,6 +58,17 @@ main {
 .MuiDialogContent-root .MuiTableContainer-root .MuiTableRow-root .table-row-header {
   font-weight: 500 !important;
   text-align: right !important;
+}
+
+/* .MuiDialogContent-root .MuiTableContainer-root .wide-cell {
+  width: 65%;
+} */
+
+.person-dialog .MuiDialog-container,
+.appt-dialog .MuiDialog-container  {
+  height: auto !important;
+  position: relative !important;
+  top: 50px !important;
 }
 
 
@@ -63,6 +79,10 @@ main {
 a {
   text-decoration: none;
   color: black;
+}
+
+.text-link:hover {
+  color: mediumpurple;
 }
 
 button,

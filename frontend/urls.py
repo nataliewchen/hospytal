@@ -12,4 +12,9 @@ urlpatterns = [
     path('doctors/create/', index),
     path('doctors/<int:id>', index),
     path('doctors/<int:id>/update', index),
+    path('appointments/', index),
+    path('appointments/create/', index),
+    path('appointments/<int:id>', index),
+    path('appointments/<int:id>/update', index),
+    path('appointments/create/<str:type>/<int:id>', index),
 ]

@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect
 from django.urls import reverse
-from .models import Patient, Doctor
-from .serializers import PatientSerializer, DoctorSerializer
+from .models import Patient, Doctor, Appointment
+from .serializers import PatientSerializer, DoctorSerializer, AppointmentSerializer
 from rest_framework import generics, status
 from rest_framework.views import APIView # generic view
 from rest_framework.response import Response # sending custom response from view
@@ -68,6 +68,7 @@ class ManagePatientView(APIView):
       data['long_gender'] = patient.long_gender()
       data['formatted_phone'] = patient.formatted_phone()
       data['formatted_height'] = patient.formatted_height()
+      
 
       return Response(data, status=status.HTTP_200_OK)
     except:
@@ -132,8 +133,6 @@ class CreateDoctorView(APIView):
       doctor.save()
 
       request.session['success'] = 'Doctor successfully created!'
-      print(doctor)
-
       data = DoctorSerializer(doctor).data
       data['id'] = doctor.id # needed for redirect
       
@@ -194,4 +193,135 @@ class ManageDoctorView(APIView):
     except:
       request.session['error'] = 'Sorry! Could not delete doctor.'
       return Response({'Bad Request': 'Invalid data...'}, status=status.HTTP_400_BAD_REQUEST)
+
+class AppointmentListView(generics.ListAPIView):
+  serializer_class = AppointmentSerializer
+  queryset = Appointment.objects.all()
+
+  def list(self, request):
+    queryset = self.get_queryset()
+    data = AppointmentSerializer(queryset, many=True).data
+
+    for appt in data:
+      appt_obj = Appointment.objects.get(id=appt['id'])
+      appt['status'] = appt_obj.status()
+      appt['formatted_time'] = appt_obj.formatted_time()
+
+    return Response(data)
+
+class CreateAppointmentView(APIView):
+  serializer_class = AppointmentSerializer
+  
+  def post(self, request, format=None):
+    serializer = self.serializer_class(data=request.data) # gives us a python version of the data so we can validate it
+    serializer.is_valid()
+    if serializer.is_valid():
+      patient_id = serializer.data.get('patient_id')
+      patient_name = serializer.data.get('patient_name')
+      doctor_id = serializer.data.get('doctor_id')
+      doctor_name = serializer.data.get('doctor_name')
+      date = serializer.data.get('date')
+      time = serializer.data.get('time')
+      notes = serializer.data.get('notes')
+
+      appt = Appointment(patient_id=patient_id, patient_name=patient_name, doctor_id=doctor_id, doctor_name=doctor_name, date=date, time=time, notes=notes)
+      appt.save()
+
+      request.session['success'] = 'Appointment successfully created!'
+      data = AppointmentSerializer(appt).data
+      data['id'] = appt.id # needed for redirect
+      
+      return Response(data, status=status.HTTP_201_CREATED)
+    request.session['error'] = 'Sorry! Could not create new appointment...'
+    return Response({'Bad Request': 'Invalid data...'}, status=status.HTTP_400_BAD_REQUEST)
+
+# url: /patients/:id
+class ManageAppointmentView(APIView):
+  serializer_class = AppointmentSerializer
+  
+  # getting patient data to populate update form or show detail
+  def get(self, request, *args, **kwargs):
+    try:
+      _id = self.kwargs.get('id')
+      appt = Appointment.objects.get(id=_id)
+      data = AppointmentSerializer(appt).data
+      data['status'] = appt.status()
+
+      return Response(data, status=status.HTTP_200_OK)
+    except:
+      request.session['error'] = 'Appointment not found.'
+      return Response({'Appointment not found': 'Invalid id...'}, status=status.HTTP_404_NOT_FOUND)
+
+  # updating patient data
+  def patch(self, request, *args, **kwargs):
+    try:
+      _id = self.kwargs.get('id')
+      serializer = self.serializer_class(data=request.data) # gives us a python version of the data so we can validate it
+      if serializer.is_valid():
+        appt = Appointment.objects.get(id=_id)
+        appt.patient_id = serializer.data.get('patient_id')
+        appt.patient_name = serializer.data.get('patient_name')
+        appt.doctor_id = serializer.data.get('doctor_id')
+        appt.doctor_name = serializer.data.get('doctor_name')
+        appt.date = serializer.data.get('date')
+        appt.time = serializer.data.get('time')
+        appt.notes = serializer.data.get('notes')
+        appt.save()
+
+        data = AppointmentSerializer(appt).data
+        request.session['success'] = 'Appointment successfully updated!'
+        return Response(data, status=status.HTTP_200_OK)
+    except:
+      request.session['error'] = 'Sorry! Could not update appointment.'
+      return Response({'Bad Request': 'Invalid data...'}, status=status.HTTP_400_BAD_REQUEST)
+
+  def delete(self, request, *args, **kwargs):
+    try:
+      _id = self.kwargs.get('id')
+      if _id != None:
+        appt = Appointment.objects.get(id=_id)
+        appt.delete()
+        request.session['success'] = 'Appointment successfully deleted!'
+        return Response({'successful delete'}, status=status.HTTP_200_OK)
+    except:
+      request.session['error'] = 'Sorry! Could not delete appointment.'
+      return Response({'Bad Request': 'Invalid data...'}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class FindAppointmentsView(generics.ListAPIView):
+  serializer_class = AppointmentSerializer
+  queryset = Appointment.objects.all()
+
+  def list(self, request, *args, **kwargs):
+    queryset = self.get_queryset()
+    _id = self.kwargs.get('id')
+    _type = self.kwargs.get('type')
+    if _type == 'patients':
+      queryset = queryset.filter(patient_id__exact=_id)
+    elif _type == 'doctors':
+      queryset = queryset.filter(doctor_id__exact=_id)
+
+    data = AppointmentSerializer(queryset, many=True).data
+
+    for appt in data:
+      appt_obj = Appointment.objects.get(id=appt['id'])
+      appt['status'] = appt_obj.status()
+      appt['formatted_time'] = appt_obj.formatted_time()
+
+    return Response(data)
+
+class CreateAppointmentFromView(APIView):
+
+  def get(self, request, *args, **kwargs):
+      _id = self.kwargs.get('id')
+      _type = self.kwargs.get('type')
+
+      if _type == 'patients':
+        patient = Patient.objects.get(id=_id)
+        data = PatientSerializer(patient).data
+        return Response(data)
+      elif _type == 'doctors':
+        doctor = Doctor.objects.get(id=_id)
+        data = DoctorSerializer(doctor).data
+        return Response(data)
 

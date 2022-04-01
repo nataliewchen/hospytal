@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Doctor, Patient
+from .models import Doctor, Patient, Appointment
 import datetime
 
 class PatientSerializer(serializers.ModelSerializer):
@@ -23,3 +23,8 @@ class DoctorSerializer(serializers.ModelSerializer):
       if day not in days:
         raise serializers.ValidationError('Invalid input for availability.')
     return value
+
+class AppointmentSerializer(serializers.ModelSerializer):
+  class Meta:
+    model = Appointment
+    fields = '__all__'
