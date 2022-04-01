@@ -1,0 +1,88 @@
+html,
+body {
+  min-height: 100vh;
+  background-color: rgb(239, 239, 248);
+}
+
+body {
+  margin: 0;
+  font-family: "Rubik", sans-serif !important;
+  text-align: center;
+  overflow-y: visible;
+}
+
+.hover:hover {
+  cursor: pointer;
+}
+
+main {
+  margin: 0 auto 10em;
+  width: 90%;
+}
+
+@media only screen and (min-width: 900px) {
+  main {
+    width: 80%;
+  }
+}
+
+@media only screen and (min-width: 1200px) {
+  main {
+    width: 60%;
+  }
+}
+
+.bg-base {
+  background-color: mediumpurple !important;
+}
+
+.white {
+  color: white;
+  background-color: transparent;
+}
+
+.person-list .MuiDataGrid-row:hover {
+  cursor: pointer;
+  background-color: rgba(25, 118, 210, 0.08) !important;
+}
+
+.form-grid > .MuiGrid-item {
+  padding: 0 5px 20px !important;
+}
+
+.MuiDialogContent-root .MuiTableContainer-root .MuiTableRow-root .table-row-header {
+  font-weight: 500 !important;
+  text-align: right !important;
+}
+
+
+.MuiPaper-root {
+  overflow-x: hidden !important;
+}
+
+a {
+  text-decoration: none;
+  color: black;
+}
+
+button,
+.MuiTypography-root,
+.MuiTableCell-root,
+.MuiDataGrid-root,
+.MuiInputLabel-root,
+.MuiFormHelperText-root {
+  font-family: "Rubik", sans-serif !important;
+}
+
+.MuiDataGrid-columnHeader {
+  font-weight: 600 !important;
+}
+
+.MuiDataGrid-root .MuiDataGrid-cell:focus {
+  outline: none !important;
+}
+
+button h2 {
+  margin-top: 0;
+  font-size: 2em;
+}
