@@ -11,7 +11,7 @@ import axios from 'axios';
 const DoctorForm = ({mode}) => {
   const {id} = useParams();
   const navigate = useNavigate();
-  const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const availability = ['Virtual Visits', 'In-Person Visits (Hospital)', 'In-Person Visits (Home)'];
   const [ formValues, setFormValues ] = useState({
     firstname: '',
     lastname: '',
@@ -44,7 +44,7 @@ const DoctorForm = ({mode}) => {
             lastname: response.data.lastname,
             gender: response.data.gender,
             phone: response.data.phone,
-            availability: response.data.availability.days
+            availability: response.data.availability.types
           })
         })
         .catch(error => navigate('/patients'))
@@ -111,7 +111,7 @@ const DoctorForm = ({mode}) => {
           lastname: formValues.lastname,
           gender: formValues.gender,
           phone: formValues.phone,
-          availability: {"days": formValues.availability}
+          availability: {"types": formValues.availability}
         }),
         mode: 'same-origin'
       };
@@ -180,10 +180,10 @@ const DoctorForm = ({mode}) => {
                 onChange={handleAvailabilityChange}
                 aria-label="availability"
               >
-                {days.map(day => 
-              <ToggleButton value={day} aria-label={day} key={day} color='primary'>
-                  {day}
-              </ToggleButton>)}
+                {availability.map((type, i) => 
+                <ToggleButton value={type} aria-label={type} key={i} color='primary'>
+                  {type}
+                </ToggleButton>)}
             </ToggleButtonGroup>
           </FormControl>
         </Grid>

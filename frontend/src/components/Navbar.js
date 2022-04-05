@@ -72,7 +72,7 @@ const Navbar = () => {
             >
               {pages.map((page) => (
                        <Link to={page.toLowerCase()} key={page}><MenuItem  onClick={handleCloseNavMenu}>
-                  <Typography textAlign="center">{page}</Typography>
+                  <Typography mx='auto'>{page}</Typography>
                 </MenuItem></Link>
               ))}
             </Menu>

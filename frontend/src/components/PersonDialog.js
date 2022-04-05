@@ -87,8 +87,10 @@ const PersonDialog = ({type}) => {
     { field: 'col4', headerName: 'Status', flex: 1}
   ];
 
+
+
   return (
-    <Dialog open={open} onClose={handleDialogClose} fullWidth className='person-dialog'>
+    <Dialog open={open} onClose={handleDialogClose} fullWidth scoll='paper' className='person-dialog'>
       <DialogTitle>
       <Stack direction='row' justifyContent='space-between' alignItems='center'>
         <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
@@ -141,7 +143,8 @@ const PersonDialog = ({type}) => {
                 {type === 'doctors' ?
                 <TableRow>
                   <TableCell className='table-row-header'>Availability:</TableCell>
-                  <TableCell>{person.formatted_availability}</TableCell>
+                  {/* <TableCell>{['hi', 'there'].map(text => <li>{text}</li>)}</TableCell> */}
+                  <TableCell>{person.availability ? person.availability.types.map((type, i) => <li key={i}>{type}</li>) : null}</TableCell>
                 </TableRow> : null}
               </TableBody>
             </Table>

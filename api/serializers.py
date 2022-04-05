@@ -18,9 +18,9 @@ class DoctorSerializer(serializers.ModelSerializer):
     fields = '__all__'
 
   def validate_availability(self, value):
-    days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
-    for day in value['days']:
-      if day not in days:
+    types_ref = ['Virtual Visits', 'In-Person Visits (Hospital)', 'In-Person Visits (Home)']
+    for type in value['types']:
+      if type not in types_ref:
         raise serializers.ValidationError('Invalid input for availability.')
     return value
 

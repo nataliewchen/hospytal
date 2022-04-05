@@ -55,7 +55,7 @@ class Doctor(models.Model):
 
   def availability_default():
     return {
-      "days": []
+      "types": []
     }
 
   firstname     = models.CharField(max_length=35, validators=[RegexValidator(r'^[a-zA-Z]+$')])
@@ -75,15 +75,6 @@ class Doctor(models.Model):
   def formatted_phone(self):
     num = self.phone
     return '(' + num[0:3] + ') ' + num[3:6] + ' - ' + num[6:]
-  
-  def formatted_availability(self):
-    ref = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
-    days = self.availability["days"]
-    days_str = ''
-    for el in ref:
-      if el in days:
-        days_str += el + ', '
-    return days_str[0:-2]
 
 
 class Appointment(models.Model):
@@ -93,6 +84,7 @@ class Appointment(models.Model):
   doctor_name     = models.CharField(max_length=70)
   date            = models.DateField()
   time            = models.TimeField()
+  type            = models.CharField(max_length=30)
   notes           = models.TextField(blank=True, null=True)
 
 

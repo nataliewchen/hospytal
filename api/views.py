@@ -154,7 +154,6 @@ class ManageDoctorView(APIView):
       # additional data to render on detail view
       data['long_gender'] = doctor.long_gender()
       data['formatted_phone'] = doctor.formatted_phone()
-      data['formatted_availability'] = doctor.formatted_availability()
 
       return Response(data, status=status.HTTP_200_OK)
     except:

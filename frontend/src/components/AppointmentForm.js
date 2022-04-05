@@ -17,6 +17,7 @@ const AppointmentForm = ({mode}) => {
     doctor_name: '',
     date: date.format(new Date(), 'YYYY-MM-DD'),
     time: date.format(new Date(), 'HH:mm:ss'),
+    type: '',
     notes: ''
   })
   const [ allPatients, setAllPatients ] = useState([]);
@@ -54,7 +55,8 @@ const AppointmentForm = ({mode}) => {
             doctor_name: response.data.doctor_name,
             date: response.data.date,
             time: response.data.time,
-            notes: response.data.notes === null ? '' : response.data.notes
+            type: response.data.type,
+            notes: response.data.notes ? response.data.notes : ''
           })
         })
         .catch(error => navigate('/appointments'))
@@ -84,7 +86,8 @@ const AppointmentForm = ({mode}) => {
     doctor_id: false,
     doctor_name: false,
     date: false,
-    time: false
+    time: false,
+    type: false
   })
   const [ formIsValid, setFormIsValid ] = useState(false);
 
@@ -142,6 +145,13 @@ const AppointmentForm = ({mode}) => {
     }));
   }
 
+  const handleTypeChange = (e) => {
+    setFormValues(prev => ({
+      ...prev,
+      type: e.target.value
+    }))
+  }
+
   const formatDateTime = () => {
     const full = String(formValues.date) + ' ' + String(formValues.time);
     const parsed = date.parse(full, 'YYYY-MM-DD HH:mm:ss');
@@ -159,6 +169,7 @@ const AppointmentForm = ({mode}) => {
       doctor_name: formValues.doctor_name === '',
       date: formValues.date === '',
       time: formValues.time === '',
+      type: formValues.type === ''
     }
   }
 
@@ -224,15 +235,34 @@ const AppointmentForm = ({mode}) => {
             renderInput={(params) => <TextField value={formValues.doctor_name} {...params} required error={formErrors.doctor_name || formErrors.doctor_id}label="Select a doctor" />}
           />
         </Grid>
-        <Grid item xs={12}>
+        <Grid item xs={12} sm={6}>
           <LocalizationProvider dateAdapter={DateAdapter}>
             <MobileDateTimePicker
-              label='Date + Time'
+              label='Date &amp; Time'
               value={dateTime}
               onChange={handleDateTimeChange}
               renderInput={(params) => <TextField {...params} required fullWidth error={formErrors.date || formErrors.time } />}
             />
           </LocalizationProvider>
+        </Grid>
+        <Grid item xs={12} sm={6} align='center'>
+        <FormControl required fullWidth error={formErrors.type}>
+          <InputLabel id="type">Visit Type</InputLabel>
+          <Select 
+            align='left'
+            labelId="type"
+            id="type"
+            label="Visit Type"
+            name='type'
+            value={formValues.type}
+            onChange={handleTypeChange}
+     
+          >
+            <MenuItem value='Virtual Visit'>Virtual Visit</MenuItem>
+            <MenuItem value={'In-Person Visit (Hospital)'}>In-Person Visit (Hospital)</MenuItem>
+            <MenuItem value={'In-Person Visit (Home)'}>In-Person Visit (Home)</MenuItem>
+          </Select>
+        </FormControl>
         </Grid>
         <Grid item xs={12}>
           <TextField  

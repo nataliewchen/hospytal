@@ -17,9 +17,9 @@ const getListData = (type, arr, width) => {
     }))
 
     columns= [
-      { field: 'col1', headerName: 'Last Name', flex: 1},
-      { field: 'col2', headerName: 'First Name', flex: 1},
-      { field: 'col3', headerName: 'Birthday', flex: 1},
+      { field: 'col1', headerName: 'Last Name', flex: 2},
+      { field: 'col2', headerName: 'First Name', flex: 2},
+      { field: 'col3', headerName: 'Birthday', flex: 2},
       { field: 'col4', headerName: 'Gender', flex: 1},
     ];
     
@@ -33,8 +33,8 @@ const getListData = (type, arr, width) => {
     }))
 
     columns= [
-      { field: 'col1', headerName: 'Last Name', flex: 1},
-      { field: 'col2', headerName: 'First Name', flex: 1},
+      { field: 'col1', headerName: 'Last Name', flex: 2},
+      { field: 'col2', headerName: 'First Name', flex: 2},
       { field: 'col3', headerName: 'Gender', flex: 1},
     ];
   }

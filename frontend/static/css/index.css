@@ -67,8 +67,8 @@ main {
 .person-dialog .MuiDialog-container,
 .appt-dialog .MuiDialog-container  {
   height: auto !important;
-  position: relative !important;
-  top: 50px !important;
+  /* position: relative !important;
+  top: 50px !important; */
 }
 
 
@@ -79,6 +79,10 @@ main {
 a {
   text-decoration: none;
   color: black;
+}
+
+li {
+  list-style: none;
 }
 
 .text-link:hover {
