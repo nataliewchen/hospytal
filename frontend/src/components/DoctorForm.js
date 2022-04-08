@@ -149,6 +149,7 @@ const DoctorForm = ({mode}) => {
                 value={formValues.accepts_new_patients}
                 onChange={handleFormChange}
                 aria-label="accepts new patients"
+                style={{ margin: '0 auto'}}
               >
                 <ToggleButton value='yes' aria-label='yes' name="accepts_new_patients" color='primary'>
                   yes

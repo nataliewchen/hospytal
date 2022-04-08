@@ -31,11 +31,11 @@ const Navbar = () => {
       <Container>
         <Toolbar sx={{ justifyContent: 'center'}}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: '0.5em'}} onClick={goHome} className='hover'>
-            <LocalHospitalIcon />
-            <Typography variant="h5">Hospytal</Typography>
+            <LocalHospitalIcon sx={{ fontSize: '1.8rem'}} />
+            <Typography variant="h5" sx={{ fontSize: '1.8rem'}}>Hospytal</Typography>
           </Box>
           { location.pathname !== '/' ?
-           <Box sx={{ flexGrow: 1, display: { xs: 'flex', sm: 'none' }, justifyContent: 'flex-end' }}>
+           <Box sx={{ flexGrow: 1, display: { xs: 'flex', md: 'none' }, justifyContent: 'flex-end' }}>
             <IconButton
               size="large"
               aria-controls="menu-appbar"
@@ -43,7 +43,7 @@ const Navbar = () => {
               onClick={handleOpenNavMenu}
               color="inherit"
             >
-              <MenuIcon />
+              <MenuIcon sx={{ fontSize: '1.8rem'}} />
             </IconButton>
             <Menu
               id="menu-appbar"
@@ -63,11 +63,11 @@ const Navbar = () => {
             </Menu>
           </Box> : null }
           { location.pathname !== '/' ?
-          <Box sx={{ flexGrow: 1, display: { xs: 'none', sm: 'flex' }, justifyContent: 'flex-end', gap: '1em'}}>
+          <Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'flex' }, justifyContent: 'flex-end', gap: '1em'}}>
             {pages.map((page, i) => (
               <Button key={i}
                 onClick={() => handleLinkClick(page)}
-                sx={{ my: 2, color: 'white', display: 'block' }}
+                sx={{ my: 2, color: 'white', display: 'block', fontSize: '1rem' }}
               >
                 {page}
               </Button>

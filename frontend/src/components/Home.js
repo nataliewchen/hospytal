@@ -11,7 +11,7 @@ export default function HomePage() {
       <Typography variant='h4' style={{ fontWeight: 700, letterSpacing: '0.05em', borderBottom: '1px solid' }}>DASHBOARD</Typography>
       <Stack direction={{xs: 'column', md: 'row'}} spacing={{ xs: 2, lg: 5}} mx='auto' alignItems='center' justifyContent='center'>
           <Link to="/patients">
-            <Button fullWidth sx={{ width: '275px', height: '200px' }} variant='contained' align='center' color='primary'>
+            <Button className='dashboard-btn' fullWidth sx={{ width: '275px', height: '200px' }} variant='contained' align='center' color='primary'>
               <Stack alignItems="center" justifyContent='center'>
                 <PersonIcon style={{ fontSize: '5em'}} />
                 <h2 style={{ marginBottom: 0}}>Patients</h2>
@@ -19,7 +19,7 @@ export default function HomePage() {
             </Button>
           </Link>
           <Link to="/doctors">
-            <Button fullWidth sx={{ width: '275px', height: '200px' }} variant='contained' color='success'>
+            <Button className='dashboard-btn' fullWidth sx={{ width: '275px', height: '200px' }} variant='contained' color='success'>
               <Stack alignItems="center" justifyContent='center'>
                 <MedicalServicesIcon style={{ fontSize: '5em'}} />
                 <h2 style={{ marginBottom: 0}}>Doctors</h2>
@@ -27,7 +27,7 @@ export default function HomePage() {
             </Button>
           </Link>
           <Link to="/appointments">
-            <Button fullWidth sx={{ width: '275px', height: '200px' }} variant='contained' color='warning'>
+            <Button className='dashboard-btn' fullWidth sx={{ width: '275px', height: '200px' }} variant='contained' color='warning'>
               <Stack alignItems="center" justifyContent='center'>
                 <CalendarMonthIcon style={{ fontSize: '5em'}} />
                 <h2 style={{ marginBottom: 0}}>Appointments</h2>

@@ -1,19 +1,35 @@
 html,
 body {
   min-height: 100vh;
-  background-color: #efeff8;
+  background-color: #f5f4f8;
 }
 
 body {
   margin: 0;
   font-family: "Mulish", sans-serif !important;
-  font-weight: 500 !important;
+  font-weight: 600 !important;
   text-align: center;
   overflow-y: visible;
 }
 
-.hover:hover {
-  cursor: pointer;
+button,
+input,
+li,
+.MuiTypography-root,
+.MuiTableCell-root,
+.MuiDataGrid-root,
+.MuiInputLabel-root,
+.MuiFormHelperText-root,
+.MuiPaper-root,
+.MuiAlert-message,
+.MuiSelect-select,
+.MuiFormLabel-root {
+  font-family: "Mulish", sans-serif !important;
+  font-weight: 600 !important;
+}
+
+button {
+  font-weight: 700 !important;
 }
 
 main {
@@ -33,8 +49,25 @@ main {
   }
 }
 
+a {
+  text-decoration: none;
+  color: black;
+}
+
+li {
+  list-style: none;
+}
+
 .bg-base {
-  background-color: mediumpurple !important;
+  background-color: #947dd3 !important;
+}
+
+.hover:hover {
+  cursor: pointer;
+}
+
+.text-link:hover {
+  color: #947dd3;
 }
 
 .white {
@@ -42,39 +75,30 @@ main {
   background-color: transparent;
 }
 
-.person-list .MuiDataGrid-row:hover {
-  cursor: pointer;
-  background-color: rgba(25, 118, 210, 0.08) !important;
-}
-
-.MuiAutocomplete-option:hover, .MuiMenuItem-root:hover {
+.person-list .MuiDataGrid-row:hover, .MuiAutocomplete-option:hover, .MuiMenuItem-root:hover {
   cursor: pointer;
   background-color: rgba(25, 118, 210, 0.08) !important;
 }
 
 .form-grid > .MuiGrid-item {
-  padding: 0 5px 20px !important;
-}
-
-.MuiDialogContent-root {
-  overflow-y: hidden !important;
+  padding: 10px !important;
 }
 
 .MuiDialogContent-root .MuiTableContainer-root .MuiTableRow-root .table-row-header {
-  font-weight: 700 !important;
-  text-align: right !important;
+  font-weight: 800 !important;
   width: 50%;
 }
 
-@media only screen and (max-width: 0px) {
+@media only screen and (min-width: 600px) {
   .MuiDialogContent-root .MuiTableContainer-root .MuiTableRow-root .table-row-header {
-    text-align: left !important;
+    text-align: right !important;
   }
 }
 
-/* .MuiDialogContent-root .MuiTableContainer-root .wide-cell {
-  width: 65%;
-} */
+.MuiDataGrid-columnHeaderTitle {
+  font-weight: 800 !important;
+}
+
 .person-dialog .MuiDialog-container,
 .appt-dialog .MuiDialog-container {
   height: auto !important;
@@ -86,41 +110,17 @@ main {
   overflow-x: hidden !important;
 }
 
-a {
-  text-decoration: none;
-  color: black;
-}
-
-li {
-  list-style: none;
-}
-
-.text-link:hover {
-  color: mediumpurple;
-}
-
-button,
-.MuiTypography-root,
-.MuiTableCell-root,
-.MuiDataGrid-root,
-.MuiInputLabel-root,
-.MuiFormHelperText-root,
-.MuiPaper-root,
-.MuiAlert-message {
-  font-family: "Mulish", sans-serif !important;
-  font-weight: 500 !important;
-}
-
-.MuiDataGrid-columnHeader {
-  font-weight: 700 !important;
+.MuiDialogContent-root {
+  overflow-y: hidden !important;
 }
 
 .MuiDataGrid-root .MuiDataGrid-cell:focus {
   outline: none !important;
 }
 
-button h2 {
+.dashboard-btn h2 {
   margin-top: 0;
-  font-size: 2em;
+  font-size: 1.8em;
+  letter-spacing: 0.05em;
 }
 /*# sourceMappingURL=index.css.map */
