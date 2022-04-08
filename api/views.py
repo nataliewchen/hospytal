@@ -5,6 +5,7 @@ from .serializers import PatientSerializer, DoctorSerializer, AppointmentSeriali
 from rest_framework import generics, status
 from rest_framework.views import APIView # generic view
 from rest_framework.response import Response # sending custom response from view
+from rest_framework.exceptions import NotFound
 
 
 # Create your views here.
@@ -23,6 +24,10 @@ class GetAlertView(APIView):
     return Response(data, status=status.HTTP_200_OK)
 
 
+
+
+
+# patient views
 class PatientListView(generics.ListAPIView):
   serializer_class = PatientSerializer
   queryset = Patient.objects.all()
@@ -51,7 +56,6 @@ class CreatePatientView(APIView):
     request.session['error'] = 'Sorry! Could not create new patient...'
     return Response({'Bad Request': 'Invalid data...'}, status=status.HTTP_400_BAD_REQUEST)
 
-
 # url: /patients/:id
 class ManagePatientView(APIView):
   serializer_class = PatientSerializer
@@ -68,6 +72,7 @@ class ManagePatientView(APIView):
       data['long_gender'] = patient.long_gender()
       data['formatted_phone'] = patient.formatted_phone()
       data['formatted_height'] = patient.formatted_height()
+      data['formatted_weight'] = patient.formatted_weight()
       
 
       return Response(data, status=status.HTTP_200_OK)
@@ -93,6 +98,11 @@ class ManagePatientView(APIView):
         patient.phone = serializer.data.get('phone')
         patient.save()
 
+        appts = Appointment.objects.filter(patient_id__exact=_id)
+        for appt in appts:
+          appt.patient_name = patient.firstname + ' ' + patient.lastname
+          appt.save()
+
         data = PatientSerializer(patient).data
         request.session['success'] = 'Patient successfully updated!'
         return Response(data, status=status.HTTP_200_OK)
@@ -106,6 +116,10 @@ class ManagePatientView(APIView):
       if _id != None:
         patient = Patient.objects.get(id=_id)
         patient.delete()
+
+        appts = Appointment.objects.filter(patient_id__exact=_id)
+        for appt in appts:
+          appt.delete()
         request.session['success'] = 'Patient successfully deleted!'
         return Response({'successful delete'}, status=status.HTTP_200_OK)
     except:
@@ -113,6 +127,10 @@ class ManagePatientView(APIView):
       return Response({'Bad Request': 'Invalid data...'}, status=status.HTTP_400_BAD_REQUEST)
 
 
+
+
+
+# doctor views
 class DoctorListView(generics.ListAPIView):
   serializer_class = DoctorSerializer
   queryset = Doctor.objects.all()
@@ -127,9 +145,9 @@ class CreateDoctorView(APIView):
       lastname = serializer.data.get('lastname').capitalize()
       gender = serializer.data.get('gender')
       phone = serializer.data.get('phone')
-      availability = serializer.data.get('availability')
+      accepts_new_patients = serializer.data.get('accepts_new_patients')
 
-      doctor = Doctor(firstname=firstname, lastname=lastname, gender=gender, phone=phone, availability=availability)
+      doctor = Doctor(firstname=firstname, lastname=lastname, gender=gender, phone=phone, accepts_new_patients=accepts_new_patients)
       doctor.save()
 
       request.session['success'] = 'Doctor successfully created!'
@@ -157,7 +175,7 @@ class ManageDoctorView(APIView):
 
       return Response(data, status=status.HTTP_200_OK)
     except:
-      request.session['error'] = 'Patient not found.'
+      request.session['error'] = 'Doctor not found.'
       return Response({'Patient not found': 'Invalid id...'}, status=status.HTTP_404_NOT_FOUND)
 
   # updating patient data
@@ -171,8 +189,13 @@ class ManageDoctorView(APIView):
         doctor.lastname = serializer.data.get('lastname').capitalize()
         doctor.gender = serializer.data.get('gender')
         doctor.phone = serializer.data.get('phone')
-        doctor.availability = serializer.data.get('availability')
+        doctor.accepts_new_patients = serializer.data.get('accepts_new_patients')
         doctor.save()
+
+        appts = Appointment.objects.filter(doctor_id__exact=_id)
+        for appt in appts:
+          appt.doctor_name = doctor.firstname + ' ' + doctor.lastname
+          appt.save()
 
         data = DoctorSerializer(doctor).data
         request.session['success'] = 'Doctor successfully updated!'
@@ -187,12 +210,22 @@ class ManageDoctorView(APIView):
       if _id != None:
         doctor = Doctor.objects.get(id=_id)
         doctor.delete()
+
+        appts = Appointment.objects.filter(doctor_id__exact=_id)
+        for appt in appts:
+          appt.delete()
+          
         request.session['success'] = 'Doctor successfully deleted!'
         return Response({'successful delete'}, status=status.HTTP_200_OK)
     except:
       request.session['error'] = 'Sorry! Could not delete doctor.'
       return Response({'Bad Request': 'Invalid data...'}, status=status.HTTP_400_BAD_REQUEST)
 
+
+
+
+
+# appointment views
 class AppointmentListView(generics.ListAPIView):
   serializer_class = AppointmentSerializer
   queryset = Appointment.objects.all()
@@ -213,12 +246,29 @@ class CreateAppointmentView(APIView):
   
   def post(self, request, format=None):
     serializer = self.serializer_class(data=request.data) # gives us a python version of the data so we can validate it
-    serializer.is_valid()
     if serializer.is_valid():
-      patient_id = serializer.data.get('patient_id')
-      patient_name = serializer.data.get('patient_name')
-      doctor_id = serializer.data.get('doctor_id')
-      doctor_name = serializer.data.get('doctor_name')
+      try:
+        patient_id = serializer.data.get('patient_id')
+        patient_name = serializer.data.get('patient_name')
+        patient = Patient.objects.get(id=patient_id)
+        fullname = patient.firstname + ' ' + patient.lastname
+        if fullname != patient_name:
+          raise NotFound()
+      except:
+        request.session['error'] = 'Could not create new appointment (patient does not exist)'
+        return Response({'Bad Request': 'Invalid data...'}, status=status.HTTP_400_BAD_REQUEST)
+
+      try:
+        doctor_id = serializer.data.get('doctor_id')
+        doctor_name = serializer.data.get('doctor_name')
+        doctor = Doctor.objects.get(id=doctor_id)
+        fullname = doctor.firstname + ' ' + doctor.lastname
+        if fullname != doctor_name:
+          raise NotFound()
+      except:
+        request.session['error'] = 'Could not create new appointment (doctor does not exist)'
+        return Response({'Bad Request': 'Invalid data...'}, status=status.HTTP_400_BAD_REQUEST)
+
       date = serializer.data.get('date')
       time = serializer.data.get('time')
       notes = serializer.data.get('notes')
@@ -245,6 +295,8 @@ class ManageAppointmentView(APIView):
       appt = Appointment.objects.get(id=_id)
       data = AppointmentSerializer(appt).data
       data['status'] = appt.status()
+      data['formatted_time'] = appt.formatted_time()
+ 
 
       return Response(data, status=status.HTTP_200_OK)
     except:
@@ -286,7 +338,6 @@ class ManageAppointmentView(APIView):
       request.session['error'] = 'Sorry! Could not delete appointment.'
       return Response({'Bad Request': 'Invalid data...'}, status=status.HTTP_400_BAD_REQUEST)
 
-
 class FindAppointmentsView(generics.ListAPIView):
   serializer_class = AppointmentSerializer
   queryset = Appointment.objects.all()
@@ -312,6 +363,7 @@ class FindAppointmentsView(generics.ListAPIView):
 class CreateAppointmentFromView(APIView):
 
   def get(self, request, *args, **kwargs):
+    try:
       _id = self.kwargs.get('id')
       _type = self.kwargs.get('type')
 
@@ -323,4 +375,7 @@ class CreateAppointmentFromView(APIView):
         doctor = Doctor.objects.get(id=_id)
         data = DoctorSerializer(doctor).data
         return Response(data)
+    except:
+      request.session['error'] = 'Unable to schedule appointment.'
+      return Response({'Person not found': 'Invalid id...'}, status=status.HTTP_404_NOT_FOUND)
 

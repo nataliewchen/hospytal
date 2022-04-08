@@ -13,8 +13,8 @@ import List from './List';
 import PersonDialog from './PersonDialog';
 import AppointmentDialog from './AppointmentDialog';
 
-import PatientForm from './Patient/PatientForm';
-import DoctorForm from './Doctor/DoctorForm';
+import PatientForm from './PatientForm';
+import DoctorForm from './DoctorForm';
 import AppointmentForm from './AppointmentForm';
 
 function App () {
@@ -23,14 +23,6 @@ function App () {
     success: '', 
     error: ''
   });
-  
-  const handleAlertClose = () => {
-    setAlert(prev => ({
-      ...prev,
-      active: false,
-    }))
-  }
-
 
   return (
     

@@ -2,7 +2,9 @@ import math
 from django.urls import reverse
 from django.db import models
 from django.core.validators import MaxValueValidator, MinValueValidator, RegexValidator
-from datetime import datetime, time, date, timedelta
+from django.utils import timezone
+import datetime
+import time
 
 # Create your models here.
 
@@ -23,11 +25,16 @@ class Patient(models.Model):
   phone       = models.CharField(max_length=10, validators=[RegexValidator(r'^[0-9]+$')])
   
   def age(self):
-    today = date.today()
+    today = datetime.date.today()
     delta = today - self.birthday 
-    year = timedelta(days = 365)
-    age = math.trunc(delta / year)
-    return age
+    year = datetime.timedelta(days = 365)
+    month = datetime.timedelta(days = 30)
+    age_yrs = math.trunc(delta / year)
+    if age_yrs == 0:
+      age_mos = math.trunc(delta / month)
+      return str(age_mos) + ' mos'
+    else:
+      return str(age_yrs) + ' yrs'
 
   def long_gender(self):
     if self.gender == 'M':
@@ -36,6 +43,9 @@ class Patient(models.Model):
       return 'Female'
     elif self.gender == '-':
       return 'Decline to Answer'
+
+  def formatted_weight(self):
+    return str(self.weight) + ' lbs'
 
   def formatted_height(self):
     return str(self.height_ft) + '\' ' + str(self.height_in) + '"'
@@ -53,16 +63,16 @@ class Doctor(models.Model):
     ('-', 'Decline to Answer'),
   ]
 
-  def availability_default():
-    return {
-      "types": []
-    }
+  ACCEPTS_NEW_PATIENTS_CHOICES = [
+    ('yes', 'yes'),
+    ('no', 'no')
+  ]
 
-  firstname     = models.CharField(max_length=35, validators=[RegexValidator(r'^[a-zA-Z]+$')])
-  lastname      = models.CharField(max_length=35, validators=[RegexValidator(r'^[a-zA-Z]+$')])
-  gender        = models.CharField(max_length=1, choices=GENDER_CHOICES)
-  phone         = models.CharField(max_length=10, validators=[RegexValidator(r'^[0-9]+$')])
-  availability  = models.JSONField(default=availability_default)
+  firstname             = models.CharField(max_length=35)
+  lastname              = models.CharField(max_length=35)
+  gender                = models.CharField(max_length=1, choices=GENDER_CHOICES)
+  phone                 = models.CharField(max_length=10, validators=[RegexValidator(r'^[0-9]+$')])
+  accepts_new_patients  = models.CharField(max_length=3, choices=ACCEPTS_NEW_PATIENTS_CHOICES)
 
   def long_gender(self):
     if self.gender == 'M':
@@ -84,20 +94,20 @@ class Appointment(models.Model):
   doctor_name     = models.CharField(max_length=70)
   date            = models.DateField()
   time            = models.TimeField()
-  type            = models.CharField(max_length=30)
   notes           = models.TextField(blank=True, null=True)
 
 
+
   def status(self):
-    date_now = datetime.now().date()
-    time_now = datetime.now().time()
-    if self.date >= date_now and self.time > time_now:
+    current_date = datetime.date.today()
+    current_time = datetime.datetime.now().time()
+    if (self.date > current_date or (self.date == current_date and self.time > current_time)):
       return 'Upcoming'
     else:
       return 'Completed'
   
+
   def formatted_time(self):
-    parsed = time.fromisoformat(str(self.time))
+    parsed = datetime.time.fromisoformat(str(self.time))
     formatted = parsed.strftime("%I:%M %p")
     return formatted
-    

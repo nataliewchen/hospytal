@@ -1,54 +1,42 @@
 import React, { useState, useEffect } from 'react';
 import { Link, Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { Typography, Paper, Button, IconButton, Stack, Box, TextField, InputAdornment, Alert } from '@mui/material';
+import axios from 'axios';
+
+import { Typography, Paper, Button, IconButton, Stack, Box, TextField, InputAdornment } from '@mui/material';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
 import EventAvailableIcon from '@mui/icons-material/EventAvailable';
 import SearchIcon from '@mui/icons-material/Search';
 import CloseOutlinedIcon from '@mui/icons-material/CloseOutlined';
 import { DataGrid } from '@mui/x-data-grid';
-import axios from 'axios';
-import capitalize from '../capitalize';
-import { useWidth } from '../hooks';
-import getListData from '../getListData';
+
+import capitalize from '../utils/capitalize';
+import { useWidth } from '../utils/hooks';
+import getListData from '../utils/getListData';
 
 
-const List = ({type, setAlert}) => {
+const List = ({type}) => {
   const [ items, setItems ] = useState([]);
   const [ query, setQuery ] = useState('');
   const [ queryResults, setQueryResults ] = useState([]);
+
   const navigate = useNavigate();
   const location = useLocation();
   const width = useWidth();
 
-  useEffect(() => {
-    setQuery('');
-  }, [location])
+  const { rows, columns } = getListData(type, queryResults, width);
 
-  useEffect(() => {
-    axios.get(`/api/${type}`)
-      .then(response => {
-        setItems(response.data);
-        setQueryResults(response.data);
-      })
-    axios.get('/api/alert')
-      .then(response => {
-        setAlert({
-          active: true,
-          success: response.data.success,
-          error: response.data.error
-        })
-      })
-  }, [location])
 
-  const handleRowClick = (e) => {
-    navigate(`${e.id}`)
+  const getItems = async() => {
+    try {
+      const response = await axios.get(`/api/${type}`);
+      setItems(response.data);
+      setQueryResults(response.data);
+    } catch (err) {
+      navigate('/');
+    }
   }
 
-  const handleQueryChange = (e) => {
-    setQuery(e.target.value.toLowerCase());
-  }
-
-  useEffect(() => {
+  const filterItems = () => {
     let results = []
     if (type === 'appointments') {
       results = items.filter(appt => appt.doctor_name.toLowerCase().includes(query) || appt.patient_name.toLowerCase().includes(query));
@@ -60,14 +48,31 @@ const List = ({type, setAlert}) => {
       })
     }
     setQueryResults(results);
+  }
+
+
+  useEffect(() => {
+    setQuery('');
+    getItems();
+  }, [location])
+
+  useEffect(() => {
+    filterItems();
   }, [query])
 
-  const { rows, columns } = getListData(type, queryResults, width);
-  
+
+  const handleRowClick = (e) => {
+    navigate(`${e.id}`)
+  }
+
+  const handleQueryChange = (e) => {
+    setQuery(e.target.value.toLowerCase());
+  }
+
 
   return (
     <Stack spacing={4}>
-      <Typography variant='h3'>
+      <Typography variant='h3' style={{ fontSize: width < 600 ? '2.5rem' : '3rem'}}>
         {capitalize(type)}
       </Typography> 
       <Stack direction={{ xs: 'column', sm: 'row' }}

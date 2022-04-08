@@ -1,36 +1,38 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
-import { DialogTitle, Dialog, DialogContent, Button, IconButton, Typography, Table, TableBody, TableCell, TableContainer, TableRow, Paper, Stack, Box, DialogActions} from '@mui/material';
+import axios from 'axios';
+import date from 'date-and-time';
+
+import { DialogTitle, Dialog, DialogContent, Button, IconButton, Table, TableBody, TableCell, TableContainer, TableRow, Stack, DialogActions} from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import CloseOutlinedIcon from '@mui/icons-material/CloseOutlined';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
-import { DataGrid, GridRowsProp, GridColDef } from '@mui/x-data-grid';
+import { DataGrid  } from '@mui/x-data-grid';
 
-import getCookie from '../getCookie';
-import capitalize from '../capitalize';
-import axios from 'axios';
-import date from 'date-and-time';
+import getCookie from '../utils/getCookie';
+import capitalize from '../utils/capitalize';
+
 
 
 const AppointmentDialog = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
+  
   const [ appt, setAppt ] = useState({});
   const [ open, setOpen ] = useState(true);
   const [ deleteOpen, setDeleteOpen ] = useState(false);
-  const navigate = useNavigate();
-  
-  useEffect(() => {
-    axios.get(`/api/appointments/${id}`)
-      .then(response => {
-        let formatted = date.parse(String(response.data.time), 'HH:mm:ss');
-        formatted = date.format(formatted, 'h:mm A');
 
-        setAppt({
-          ...response.data,
-          formatted_time: formatted
-        })
-      })
-      .catch(error => navigate(`/appointments`))
+  const getDetails = async() => {
+    try {
+      const response = await axios.get(`/api/appointments/${id}`);
+      setAppt(response.data);
+    } catch {
+      navigate(`/appointments`)
+    }
+  }
+
+  useEffect(() => {
+    getDetails();
   }, [])
 
   const handleDialogClose = () => {
@@ -42,15 +44,19 @@ const AppointmentDialog = () => {
     setDeleteOpen(false);
   };
   
-  const handleDelete = () => {
+  const handleDelete = async() => {
     const params = {
       headers: { 
         'Content-Type': 'application/json',
         'X-CSRFToken': getCookie('csrftoken')
       },
     }
-    axios.delete(`/api/appointments/${id}`, params)
-      .then(response => handleDialogClose())
+    try {
+      const response =  await axios.delete(`/api/appointments/${id}`, params)
+      handleDialogClose();
+    } catch {
+      navigate(`/appointments/${id}`)
+    }
   }
 
   const handleEdit = () => {
@@ -76,7 +82,7 @@ const AppointmentDialog = () => {
               </TableRow>
               <TableRow>
                 <TableCell className='table-row-header'>Doctor Name:</TableCell>
-                <TableCell><Link className='text-link' to={`/patients/${appt.doctor_id}`}>{appt.doctor_name}</Link></TableCell>
+                <TableCell><Link className='text-link' to={`/doctors/${appt.doctor_id}`}>{appt.doctor_name}</Link></TableCell>
               </TableRow>
               <TableRow>
                 <TableCell className='table-row-header'>Date:</TableCell>
@@ -99,14 +105,14 @@ const AppointmentDialog = () => {
           </Table>
         </TableContainer>
         <Stack direction='row' justifyContent='center' spacing={1}>
-                    <Button variant='outlined' size='small' startIcon={<EditOutlinedIcon />} color='primary' disableElevation onClick={handleEdit}>
-                      Edit
-                    </Button>
-                    <Button variant='outlined' size='small' startIcon={<DeleteIcon />} color='error' disableElevation onClick={()=> {setDeleteOpen(true)}}>
-                      Delete
-                    </Button>
-                  </Stack>
+          <Button style={{ width: '130px' }}  variant='outlined' size='small' startIcon={<EditOutlinedIcon />} color='primary' disableElevation onClick={handleEdit}>
+            Edit
+          </Button>
+          <Button style={{ width: '130px' }}  variant='outlined' size='small' startIcon={<DeleteIcon />} color='error' disableElevation onClick={()=> {setDeleteOpen(true)}}>
+            Delete
+          </Button>
         </Stack>
+      </Stack>
         
       </DialogContent>
       <Dialog

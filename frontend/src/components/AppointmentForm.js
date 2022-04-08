@@ -1,110 +1,100 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link, useParams } from 'react-router-dom';
-import { Box, Grid, Typography, Autocomplete, Button, TextField, Paper, FormControl, Stack, InputLabel, Select, MenuItem } from '@mui/material';
-import DateAdapter from '@mui/lab/AdapterDateFns';
-import { LocalizationProvider, MobileDateTimePicker } from '@mui/lab';
-import getCookie from '../getCookie';
 import date from 'date-and-time';
 import axios from 'axios';
+
+import { Grid, Typography, Autocomplete, Button, TextField, Paper, FormControl, Stack, InputLabel, Select, MenuItem } from '@mui/material';
+import DateAdapter from '@mui/lab/AdapterDateFns';
+import { LocalizationProvider, DesktopDatePicker } from '@mui/lab';
+
+import getCookie from '../utils/getCookie';
+import { toPyDate, toPyTime, toJSDate, toJSTime, toFullYear } from '../utils/convertDateTime';
+import isValidDate from '../utils/isValidDate';
 
 const AppointmentForm = ({mode}) => {
   const { id, type } = useParams();
   const navigate = useNavigate();
-  const [ formValues, setFormValues ] = useState({
-    patient_id: '',
-    patient_name: '',
-    doctor_id: '',
-    doctor_name: '',
-    date: date.format(new Date(), 'YYYY-MM-DD'),
-    time: date.format(new Date(), 'HH:mm:ss'),
-    type: '',
-    notes: ''
-  })
+  const fields = ['patient_id', 'patient_name', 'doctor_id', 'doctor_name', 'date', 'time', 'notes'];
+
+  const fieldDefaults = (value) => {
+    const defaults = {};
+    fields.forEach(field => defaults[field] = value);
+    defaults.date = new Date();
+    return defaults;
+  }
+
+  const [ formValues, setFormValues ] = useState(fieldDefaults(''))
   const [ allPatients, setAllPatients ] = useState([]);
   const [ allDoctors, setAllDoctors ] = useState([]);
-  const [ dateTime, setDateTime ] = useState(new Date());
+  const [ formErrors, setFormErrors ] = useState(fieldDefaults(false));
+  const [ formIsValid, setFormIsValid ] = useState(false);
 
-    useEffect(() => {
-      axios.get('/api/patients')
-        .then(response => {
-          const patients = response.data.map(patient => ({
-            label: patient.firstname + ' ' + patient.lastname,
-            id: patient.id
-          }))
-          setAllPatients(patients);
-        })
-      
-        axios.get('/api/doctors')
-        .then(response => {
-          const doctors = response.data.map(doctor => ({
-            label: doctor.firstname + ' ' + doctor.lastname,
-            id: doctor.id
-          }))
-          setAllDoctors(doctors);
-        })
-  }, [])
+
+  const getAllPatients = async() => {
+    const response = await axios.get('/api/patients');
+    const patients = [{ label: '', id: null }];
+    response.data.forEach(patient => {
+      patients.push({
+        label: patient.firstname + ' ' + patient.lastname,
+        id: patient.id,
+      });
+    });
+    setAllPatients(patients);
+  }
+
+  const getAllDoctors = async() => {
+    const response = await axios.get('/api/doctors');
+    const doctors = [{label: '', id: null}];
+    response.data.forEach(doctor => {
+      doctors.push({
+        label: doctor.firstname + ' ' + doctor.lastname,
+        id: doctor.id
+      })
+    });
+    setAllDoctors(doctors);
+  }
+
+  const populateFormfromAppt = async() => {
+    const response = await axios.get(`/api/appointments/${id}`);
+    setFormValues({
+      ...response.data,
+      date: toJSDate(response.data.date)
+    });
+  }
+
+  const populateFormfromPerson = async() => {
+    const response = axios.get(`/api/appointments/create/${type}/${id}`);
+    if (type === 'patients') {
+      setFormValues(prev => ({
+        patient_id: response.data.id,
+        patient_name: response.data.firstname + ' ' + response.data.lastname,
+      }))
+    } else if (type === 'doctors') {
+      setFormValues(prev => ({
+        doctor_id: response.data.id,
+        doctor_name: response.data.firstname + ' ' + response.data.lastname,
+      }))
+    }
+  }
 
   useEffect(() => {
+    getAllPatients();
+    getAllDoctors();
+
     if (mode === 'Update') {
-      axios.get(`/api/appointments/${id}`)
-        .then(response => {
-          setFormValues({
-            patient_id: response.data.patient_id,
-            patient_name: response.data.patient_name,
-            doctor_id: response.data.doctor_id,
-            doctor_name: response.data.doctor_name,
-            date: response.data.date,
-            time: response.data.time,
-            type: response.data.type,
-            notes: response.data.notes ? response.data.notes : ''
-          })
-        })
-        .catch(error => navigate('/appointments'))
-    } else if (mode === 'CreateFrom') {
-      axios.get(`/api/appointments/create/${type}/${id}`)
-        .then(response => {
-          if (type === 'patients') {
-            setFormValues(prev => ({
-              ...prev,
-              patient_id: response.data.patient_id,
-              patient_name: response.data.firstname + ' ' + response.data.lastname,
-            }))
-          } else if (type === 'doctors') {
-            setFormValues(prev => ({
-              ...prev,
-              doctor_id: response.data.doctor_id,
-              doctor_name: response.data.firstname + ' ' + response.data.lastname,
-            }))
-          }
-        })
+      populateFormfromAppt();
+    } else if (mode === 'Create From') {
+      populateFormfromPerson();
     }
   }, [])
   
-  const [ formErrors, setFormErrors ] = useState({
-    patient_id: false,
-    patient_name: false,
-    doctor_id: false,
-    doctor_name: false,
-    date: false,
-    time: false,
-    type: false
-  })
-  const [ formIsValid, setFormIsValid ] = useState(false);
 
-  const handleNotesChange = (e) => {
+
+  const handlePatientChange = (e, value) => {
     setFormValues(prev => ({
       ...prev,
-      notes: e.target.value
-    }));
-  }
-
-  const handlePatientChange = (e) => {
-    const fullname = e.target.textContent;
-    const id = allPatients.find(patient => patient.label === fullname).id;
-    setFormValues(prev => ({
-      ...prev,
-      patient_name: fullname,
-      patient_id: id
+      patient_name: value.label,
+      patient_id: value.id
     }));
     setFormErrors(prev => ({
       ...prev,
@@ -113,13 +103,11 @@ const AppointmentForm = ({mode}) => {
     }));
   }
 
-  const handleDoctorChange = (e) => {
-    const fullname = e.target.textContent;
-    const id = allDoctors.find(doctor => doctor.label === fullname).id;
+  const handleDoctorChange = (e, value) => {
     setFormValues(prev => ({
       ...prev,
-      doctor_name: fullname,
-      doctor_id: id
+      doctor_name: value.label,
+      doctor_id: value.id
     }));
     setFormErrors(prev => ({
       ...prev,
@@ -128,63 +116,96 @@ const AppointmentForm = ({mode}) => {
     }));
   }
 
-  const handleDateTimeChange = (value) => {
-    setDateTime(value);
-    const parsed = date.parse(String(value), '    MMM DD YYYY HH:mm:ss...');
-    const day = date.format(parsed, 'YYYY-MM-DD');
-    const time = date.format(parsed, 'HH:mm:ss');
-    setFormValues(prev => ({
-      ...prev,
-      date: day,
-      time: time
-    }));
-    setFormErrors(prev => ({
-      ...prev,
-      date: false,
-      time: false
-    }));
-  }
-
-  const handleTypeChange = (e) => {
-    setFormValues(prev => ({
-      ...prev,
-      type: e.target.value
-    }))
-  }
-
-  const formatDateTime = () => {
-    const full = String(formValues.date) + ' ' + String(formValues.time);
-    const parsed = date.parse(full, 'YYYY-MM-DD HH:mm:ss');
-    return parsed;
-  }
   
+  const handleDateChange = (value) => {
+    if (value) {
+      // console.log('v', value, 'f', formValues.date)
+      // const diff = date.subtract(new Date(), value).toSeconds();
+      // console.log(new Date(), value);
+      // console.log(diff);
+      // if (diff > 10 || diff < 0) {
+        const year = toFullYear(value);
+        //const formatted = toPyDate(value);
+        setFormValues(prev => ({
+          ...prev,
+          date: year > 1000 ? value : ''
+        }));
+        setFormErrors(prev => ({
+          ...prev,
+          date: false
+        }));
+      // }      
+    } else {
+      setFormValues(prev => ({...prev, date: ''}));
+    }
+  }
+
+  // time, notes
+  const handleFormChange = (e) => {
+    const { name, value } = e.target;
+    setFormValues(prev => ({ ...prev,  [name]: value }));
+    setFormErrors(prev => ({   ...prev,   [name]: false }));
+  }
 
 
-  const validateAppointment = () => {
-    // conditions that would cause errors
+  const apptErrors = () => {
     return {
       patient_id: formValues.patient_id === '',
       patient_name: formValues.patient_name === '',
       doctor_id: formValues.doctor_id === '',
       doctor_name: formValues.doctor_name === '',
       date: formValues.date === '',
-      time: formValues.time === '',
-      type: formValues.type === ''
+      time: formValues.time === ''
     }
   }
 
   const handleSave = () => {
     setFormErrors(prev => {
-      const errors =  validateAppointment();
+      const errors =  apptErrors();
       setFormIsValid(!Object.values(errors).includes(true));
       return errors;
     })
   }
 
+
+
+  const checkDoctorEquality = (option, value) => {
+    if (formValues.doctor_id) {
+      return option.label === value && option.id === formValues.doctor_id;
+    } else {
+      return option.label === value;
+    }
+  }
+
+  const checkPatientEquality = (option, value) => {
+    if (formValues.patient_id) {
+      return option.label === value && option.id === formValues.patient_id;
+    } else {
+      return option.label === value;
+    }
+  }
+
+  let apptTimes = [];
+  const getTimes= () => {
+    for (let i=9; i<18; ++i) {
+      apptTimes.push({
+        value: `${i}:00:00`,
+        label: `${i > 12 ? i % 12 : i}:00 ${i < 11 ? 'am' : 'pm'}`
+      });
+      apptTimes.push({
+        value: `${i}:30:00`,
+        label: `${i > 12 ? i % 12 : i}:30 ${i < 11 ? 'am' : 'pm'}` 
+      })
+    }
+    apptTimes.pop();
+  }
+  getTimes();
+
+
   useEffect(() => {
     if (formIsValid) {
-      const url = mode === 'Create' ? '/api/appointments/create' : `/api/appointments/${id}`;
-      const method = mode === 'Create' ? 'POST' : 'PATCH';
+      const url = mode === 'Update' ? `/api/appointments/${id}` : `/api/appointments/create`;
+      const method = mode === 'Update' ? 'PATCH' : 'POST';
       const params = {
         method: method,
         url: url,
@@ -193,13 +214,8 @@ const AppointmentForm = ({mode}) => {
           'X-CSRFToken': getCookie('csrftoken')
         },
         data: JSON.stringify({
-          patient_id: formValues.patient_id,
-          patient_name: formValues.patient_name,
-          doctor_id: formValues.doctor_id,
-          doctor_name: formValues.doctor_name,
-          date: formValues.date,
-          time: formValues.time,
-          notes: formValues.notes
+          ...formValues,
+          date: toPyDate(formValues.date)
         }),
         mode: 'same-origin'
       };
@@ -213,63 +229,70 @@ const AppointmentForm = ({mode}) => {
   return (
     <Stack alignItems='center' spacing={4}>
       <Typography variant='h3'>{mode === 'Update' ? 'Update' : 'Create'} Appointment</Typography>
-      <Grid className='form-grid' container sx={{maxWidth: '600px', p: 3, mx: 'auto'}} spacing={3} component={Paper}>
+      <Grid className='form-grid' container sx={{maxWidth: '550px', p: 3, mx: 'auto'}} spacing={3} component={Paper}>
         <Grid item xs={12}>
           <Autocomplete
             disablePortal
+            disableClearable
             options={allPatients}
             onChange={handlePatientChange}
-            
+            value={formValues.patient_name}
             fullWidth
-            isOptionEqualToValue={(option, value) => option == value}
-            renderInput={(params) => <TextField value={formValues.patient_name} {...params} required error={formErrors.patient_name || formErrors.patient_id} label="Select a patient" />}
+            isOptionEqualToValue={checkPatientEquality}
+            renderInput={(params) => <TextField {...params} required error={formErrors.patient_name || formErrors.patient_id} label="Select a patient" />}
+            renderOption={(props, option) => ( <li {...props} key={option.id}>{option.label}</li> )}
           />
         </Grid>
         <Grid item xs={12}>
           <Autocomplete
             disablePortal
+            disableClearable
             options={allDoctors}
             onChange={handleDoctorChange}
-            
+            value={formValues.doctor_name}
             fullWidth
-            renderInput={(params) => <TextField value={formValues.doctor_name} {...params} required error={formErrors.doctor_name || formErrors.doctor_id}label="Select a doctor" />}
+            isOptionEqualToValue={checkDoctorEquality}
+            renderInput={(params) => <TextField {...params} value={formValues.doctor_name} required error={formErrors.doctor_name || formErrors.doctor_id} label="Select a doctor" />}
+            renderOption={(props, option) => ( <li {...props} key={option.id}>{option.label}</li> )}         
           />
         </Grid>
         <Grid item xs={12} sm={6}>
           <LocalizationProvider dateAdapter={DateAdapter}>
-            <MobileDateTimePicker
-              label='Date &amp; Time'
-              value={dateTime}
-              onChange={handleDateTimeChange}
-              renderInput={(params) => <TextField {...params} required fullWidth error={formErrors.date || formErrors.time } />}
+            <DesktopDatePicker
+              label="Date"
+              allowSameDateSelection
+              disableCloseOnSelect={false}
+              value={formValues.date}
+              onChange={handleDateChange}
+              renderInput={(params) => <TextField required error={formErrors.date} fullWidth {...params} />} 
             />
           </LocalizationProvider>
+          
         </Grid>
-        <Grid item xs={12} sm={6} align='center'>
-        <FormControl required fullWidth error={formErrors.type}>
-          <InputLabel id="type">Visit Type</InputLabel>
-          <Select 
-            align='left'
-            labelId="type"
-            id="type"
-            label="Visit Type"
-            name='type'
-            value={formValues.type}
-            onChange={handleTypeChange}
-     
-          >
-            <MenuItem value='Virtual Visit'>Virtual Visit</MenuItem>
-            <MenuItem value={'In-Person Visit (Hospital)'}>In-Person Visit (Hospital)</MenuItem>
-            <MenuItem value={'In-Person Visit (Home)'}>In-Person Visit (Home)</MenuItem>
-          </Select>
-        </FormControl>
+        <Grid item xs={12} sm={6}>
+          <FormControl required fullWidth error={formErrors.time}>
+            <InputLabel id="time">Time</InputLabel>
+            <Select
+              name='time'
+              labelId="time"
+              id="time"
+              value={formValues.time}
+              label="time"
+              align='left'
+              onChange={handleFormChange}
+            >
+               {apptTimes.map((time, i) => 
+                <MenuItem key={i} value={time.value}>{time.label}</MenuItem>)} 
+            </Select>
+          </FormControl>
         </Grid>
         <Grid item xs={12}>
           <TextField  
+            name='notes'
             label='Notes' 
             fullWidth multiline rows={5}
             value={formValues.notes}
-            onChange={handleNotesChange}
+            onChange={handleFormChange}
             />
           </Grid>
         <Grid item xs={12} sx={{ display: 'flex', justifyContent: 'space-between'}}>

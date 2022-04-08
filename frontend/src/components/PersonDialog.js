@@ -7,42 +7,49 @@ import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import EventAvailableIcon from '@mui/icons-material/EventAvailable';
 import { DataGrid } from '@mui/x-data-grid';
 
-import getCookie from '../getCookie';
-import capitalize from '../capitalize';
+import getCookie from '../utils/getCookie';
+import capitalize from '../utils/capitalize';
 import axios from 'axios';
+import { useWidth } from '../utils/hooks';
 
 
 const PersonDialog = ({type}) => {
   const { id } = useParams();
-  const [ person, setPerson ] = useState({});
+  const navigate = useNavigate();
+  const width = useWidth();
+
+  const [ person, setPerson ] = useState({ firstname: '', lastname: ''});
   const [ open, setOpen ] = useState(true);
   const [ deleteOpen, setDeleteOpen ] = useState(false);
   const [ rows, setRows ] = useState([]);
   const [ tab, setTab ] = useState('Details');
-  const navigate = useNavigate();
+
+
+  const getDetails = async() => {
+    try {
+      const response = await axios.get(`/api/${type}/${id}`);
+      setPerson(response.data);
+    } catch {
+      navigate(`/${type}`)
+    }
+  }
+
+  const getAppts = async() => {
+    const response = await axios.get(`/api/appointments/${type}/${id}`);
+    const rows = response.data.map(appt => ({
+      id: appt.id,
+      col1: type === 'patients' ? appt.doctor_name : appt.patient_name,
+      col2: String(appt.date) + ' ' + String(appt.formatted_time)
+    }));
+    setRows(rows);
+  }
+
   
   useEffect(() => {
-    axios.get(`/api/${type}/${id}`)
-      .then(response => setPerson(response.data))
-      .catch(error => navigate(`/${type}`))
+    getDetails();
+    getAppts();
   }, [])
 
-  useEffect(() => {
-    axios.get(`/api/appointments/${type}/${id}`)
-      .then(response => {
-        const rows = response.data.map(appt => {
-          return {
-            id: appt.id,
-            col1: type === 'patients' ? appt.doctor_name : appt.patient_name,
-            col2: appt.date, 
-            col3: appt.formatted_time, 
-            col4: appt.status
-          }
-        })
-        setRows(rows);
-      })
-      .catch(error => navigate(`/${type}`))
-  }, [])
 
   const handleDialogClose = () => {
     setOpen(false);
@@ -60,15 +67,20 @@ const PersonDialog = ({type}) => {
   const handleCreateAppt = () => {
     navigate(`/appointments/create/${type}/${id}`);
   }
-  const handleDelete = () => {
+
+  const handleDelete = async () => {
     const params = {
       headers: { 
         'Content-Type': 'application/json',
         'X-CSRFToken': getCookie('csrftoken')
       },
     }
-    axios.delete(`/api/${type}/${id}`, params)
-      .then(response => handleDialogClose())
+    try {
+      const response = await axios.delete(`/api/${type}/${id}`, params)
+      handleDialogClose();
+    } catch {
+      navigate(`/${type}/${id}`)
+    }
   }
 
   const handleEdit = () => {
@@ -79,14 +91,31 @@ const PersonDialog = ({type}) => {
     navigate(`/appointments/${e.id}`)
   }
 
-  const nameToShow = type === 'patients' ? 'Doctor' : 'Patient'
-  const columns= [
-    { field: 'col1', headerName: nameToShow, flex: 1},
-    { field: 'col2', headerName: 'Date', flex: 1},
-    { field: 'col3', headerName: 'Time', flex: 1},
-    { field: 'col4', headerName: 'Status', flex: 1}
+  //for data grid
+  let columns= [
+    { field: 'col1', headerName: type === 'patients' ? 'Doctor' : 'Patient', flex: 1},
+    { field: 'col2', headerName: 'Date & Time', flex: 1},
   ];
 
+  if (width < 600) {
+    columns = columns.slice(1);
+  }
+
+  const patientTable = [
+    { header: 'Name:',          content: person.firstname + ' ' + person.lastname },
+    { header: 'Date of Birth:', content: person.birthday },
+    { header: 'Age:',           content: person.age },
+    { header: 'Gender:',        content: person.long_gender },
+    { header: 'Weight:',        content: person.formatted_weight },
+    { header: 'Height:',        content: person.formatted_height },
+    { header: 'Phone Number:',  content: person.formatted_phone }
+  ]
+  const doctorTable = [
+    { header: 'Name:',                  content: person.firstname + ' ' + person.lastname },
+    { header: 'Gender:',                content: person.long_gender },
+    { header: 'Phone Number:',          content: person.formatted_phone },
+    { header: 'Accepts New Patients:',  content: person.accepts_new_patients }
+  ]
 
 
   return (
@@ -96,86 +125,63 @@ const PersonDialog = ({type}) => {
         <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
         <Tabs value={tab} aria-label="dialog navigation" onChange={handleTabChange}>
           <Tab label="Details" value="Details" />
-          <Tab label="Appointments" value="Appointments"  />
+          <Tab label={width < 400 ? 'Appts' : 'Appointments'} value="Appointments"  />
           </Tabs>
         </Box>
         <IconButton aria-label='close' onClick={handleDialogClose}><CloseOutlinedIcon /></IconButton>
         </Stack>
         
       </DialogTitle>
-      <DialogContent>
+      <DialogContent >
         <Stack spacing={3} sx={{ display: tab === 'Details' ? 'block' : 'none'}}>
           <TableContainer mt={5} sx={{ border: 1, borderColor: 'lightgray' }}>
             <Table aria-label='detail table'>
             <TableBody>
-                <TableRow>
-                  <TableCell className='table-row-header'>Name:</TableCell>
-                  <TableCell>{person.firstname} {person.lastname}</TableCell>
-                </TableRow>
-                {type === 'patients' ?
-                <TableRow>
-                  <TableCell className='table-row-header'>Date of Birth:</TableCell>
-                  <TableCell>{person.birthday}</TableCell>
-                </TableRow>  : null}
-                {type === 'patients' ?
-                <TableRow>
-                  <TableCell className='table-row-header'>Age:</TableCell>
-                  <TableCell>{person.age}</TableCell>
-                </TableRow> : null}
-                <TableRow> 
-                  <TableCell className='table-row-header'>Gender:</TableCell>
-                  <TableCell>{person.long_gender}</TableCell>
-                </TableRow>
-                {type === 'patients' ?
-                <TableRow>
-                  <TableCell className='table-row-header'>Weight:</TableCell>
-                  <TableCell>{person.weight} lbs</TableCell>
-                </TableRow> : null}
-                {type === 'patients' ?
-                <TableRow>
-                  <TableCell className='table-row-header'>Height:</TableCell>
-                  <TableCell>{person.formatted_height}</TableCell>
-                </TableRow> : null}
-                <TableRow>
-                  <TableCell className='table-row-header'>Phone Number:</TableCell>
-                  <TableCell>{person.formatted_phone}</TableCell>
-                </TableRow>
-                {type === 'doctors' ?
-                <TableRow>
-                  <TableCell className='table-row-header'>Availability:</TableCell>
-                  {/* <TableCell>{['hi', 'there'].map(text => <li>{text}</li>)}</TableCell> */}
-                  <TableCell>{person.availability ? person.availability.types.map((type, i) => <li key={i}>{type}</li>) : null}</TableCell>
-                </TableRow> : null}
+              {type === 'patients' ? patientTable.map((row, i) => 
+              <TableRow key={i}>
+                <TableCell className='table-row-header'>{row.header}</TableCell>
+                <TableCell>{row.content}</TableCell>
+              </TableRow>
+              ) : null}
+              {type === 'doctors' ? doctorTable.map((row, i) => 
+              <TableRow key={i}>
+                <TableCell className='table-row-header'>{row.header}</TableCell>
+                <TableCell>{row.content}</TableCell>
+              </TableRow>
+              ) : null}
               </TableBody>
             </Table>
           </TableContainer>
-          <Stack direction='row' justifyContent='center' spacing={1}>
-            <Button variant='outlined' size='small' startIcon={<EventAvailableIcon />} color='success' disableElevation onClick={handleCreateAppt}>
+          <Stack direction={{ xs: 'column', sm: 'row'}} justifyContent='center' alignItems='center' spacing={1}>
+            <Button style={{ width: '130px' }} variant='outlined' size='small' startIcon={<EventAvailableIcon />} color='success' disableElevation onClick={handleCreateAppt}>
               Schedule
             </Button>
-            <Button variant='outlined' size='small' startIcon={<EditOutlinedIcon />} color='primary' disableElevation onClick={handleEdit}>
+            <Button style={{ width: '130px' }} variant='outlined' size='small' startIcon={<EditOutlinedIcon />} color='primary' disableElevation onClick={handleEdit}>
               Edit
             </Button>
-            <Button variant='outlined' size='small' startIcon={<DeleteIcon />} color='error' disableElevation onClick={()=> {setDeleteOpen(true)}}>
+            <Button style={{ width: '130px' }} variant='outlined' size='small' startIcon={<DeleteIcon />} color='error' disableElevation onClick={()=> {setDeleteOpen(true)}}>
               Delete
             </Button>
           </Stack>
         </Stack>
-        
+        <Box style={{ height: tab === 'Appointments' ? '100%' : '0px', opacity: tab === 'Appointments' ? 1 : 0 }}>
           {rows.length === 0 ? <Box p={5}>No appointments to show</Box> : 
-          <Box style={{  }} component={Paper}>
-          <DataGrid 
-            className='person-list person-list'
-            rows={rows} 
-            columns={columns}
-            autoHeight
-            scroll='paper'
-            disableColumnMenu 
-            pageSize={5}
-            rowsPerPageOptions={[5]}
-            onRowClick={handleApptClick}
-            isRowSelectable={() => {false}}
-            sx={{ px: '20px', display: tab === 'Appointments' ? 'block' : 'none'}} /></Box>}
+          <Box style={{ width: '100%' }} component={Paper}>
+            <DataGrid 
+              className='person-list person-list'
+              rows={rows} 
+              columns={columns}
+              autoHeight
+              hideFooter
+              scroll='paper'
+              disableColumnMenu 
+              pageSize={5}
+              rowsPerPageOptions={[5]}
+              onRowClick={handleApptClick}
+              isRowSelectable={() => {false}}
+              sx={{ px: '20px' }} />
+          </Box>}
+        </Box>
           
     
 
@@ -188,13 +194,11 @@ const PersonDialog = ({type}) => {
         maxWidth='xs'
       >
         <DialogContent>
-            Are you sure you want to delete this {type.slice(0, -1)}? This action cannot be undone.
+            Are you sure you want to delete this {type.slice(0, -1)} and all associated appointments? This action cannot be undone.
         </DialogContent>
         <DialogActions>
           <Button onClick={handleDeleteDialogClose}>Cancel</Button>
-          <Button color='error' onClick={handleDelete} autoFocus>
-            Yes, delete
-          </Button>
+          <Button color='error' onClick={handleDelete} autoFocus>Yes, delete</Button>
         </DialogActions>
       </Dialog>
     </Dialog>
