@@ -3,7 +3,7 @@ import { useNavigate, Link, useParams } from 'react-router-dom';
 import date from 'date-and-time';
 import axios from 'axios';
 
-import { Grid, Typography, Autocomplete, Button, TextField, Paper, FormControl, Stack, InputLabel, Select, MenuItem } from '@mui/material';
+import { Grid, Typography, Autocomplete, Button, TextField, Paper, FormControl, Stack, InputLabel, Select, MenuItem, ClickAwayListener } from '@mui/material';
 import DateAdapter from '@mui/lab/AdapterDateFns';
 import { LocalizationProvider, DesktopDatePicker } from '@mui/lab';
 
@@ -28,6 +28,11 @@ const AppointmentForm = ({mode}) => {
   const [ allDoctors, setAllDoctors ] = useState([]);
   const [ formErrors, setFormErrors ] = useState(fieldDefaults(false));
   const [ formIsValid, setFormIsValid ] = useState(false);
+  // const [ datePickerOpen, setDatePickerOpen ] = useState(false);
+  const [ dateRef, setDateRef ] = useState({
+    open: null,
+    clickaway: null
+  });
 
 
   const getAllPatients = async() => {
@@ -117,28 +122,7 @@ const AppointmentForm = ({mode}) => {
   }
 
   
-  const handleDateChange = (value) => {
-    if (value) {
-      // console.log('v', value, 'f', formValues.date)
-      // const diff = date.subtract(new Date(), value).toSeconds();
-      // console.log(new Date(), value);
-      // console.log(diff);
-      // if (diff > 10 || diff < 0) {
-        const year = toFullYear(value);
-        //const formatted = toPyDate(value);
-        setFormValues(prev => ({
-          ...prev,
-          date: year > 1000 ? value : ''
-        }));
-        setFormErrors(prev => ({
-          ...prev,
-          date: false
-        }));
-      // }      
-    } else {
-      setFormValues(prev => ({...prev, date: ''}));
-    }
-  }
+
 
   // time, notes
   const handleFormChange = (e) => {
@@ -167,7 +151,42 @@ const AppointmentForm = ({mode}) => {
     })
   }
 
+  const handleDateOpen = () => {
+    setDateRef({ open: formValues.date });
+  }
 
+  const handleDateChange = (value) => {
+    if (value) {
+        const year = toFullYear(value);
+        setFormValues(prev => ({
+          ...prev,
+          date: year > 1000 ? value : ''
+        }));
+        setFormErrors(prev => ({
+          ...prev,
+          date: false
+        }));     
+    } else {
+      setFormValues(prev => ({...prev, date: ''}));
+    }
+  }
+
+  const handleDateClickAway = (e) => {
+    setDateRef(prev => ({ 
+      ...prev,
+      clickaway: formValues.date
+     }));
+  }
+
+
+  const handleDateAccept = (value) => {
+    if (dateRef.open === dateRef.clickaway) { // prevent resetting to current date if clickaway doesn't change date
+      setFormValues(prev => ({
+        ...prev,
+        date: dateRef.open
+      }));
+    }
+  }
 
   const checkDoctorEquality = (option, value) => {
     if (formValues.doctor_id) {
@@ -257,17 +276,20 @@ const AppointmentForm = ({mode}) => {
           />
         </Grid>
         <Grid item xs={12} sm={6}>
-          <LocalizationProvider dateAdapter={DateAdapter}>
-            <DesktopDatePicker
-              label="Date"
-              allowSameDateSelection
-              disableCloseOnSelect={false}
-              value={formValues.date}
-              onChange={handleDateChange}
-              renderInput={(params) => <TextField required error={formErrors.date} fullWidth {...params} />} 
-            />
-          </LocalizationProvider>
           
+            <LocalizationProvider dateAdapter={DateAdapter}>
+            <ClickAwayListener onClickAway={handleDateClickAway}>
+              <DesktopDatePicker
+                label="Date"
+                allowSameDateSelection
+                value={formValues.date}
+                onOpen={handleDateOpen}
+                onAccept={handleDateAccept}
+                onChange={handleDateChange}
+                renderInput={(params) => <TextField required error={formErrors.date} fullWidth {...params} />} 
+              />
+          </ClickAwayListener>
+            </LocalizationProvider>
         </Grid>
         <Grid item xs={12} sm={6}>
           <FormControl required fullWidth error={formErrors.time}>
