@@ -192,8 +192,6 @@ const AppointmentForm = ({mode}) => {
 
   const checkPatientEquality = (option, value) => {
     if (duplicates.patients.includes(option.label)) {
-      console.log('option', option.label, 'value', value, option.label === value);
-      console.log(String(option.id), formValues.patient_id, option.id === formValues.patient_id);
       return option.label === value && option.id === formValues.patient_id;
     } else {
       return option.label === value;
@@ -201,11 +199,11 @@ const AppointmentForm = ({mode}) => {
   }
 
   const checkDoctorEquality = (option, value) => {
-    // if (formValues.doctor_id) {
-    //   return option.label === value && String(option.id) === formValues.doctor_id;
-    // } else {
+    if (duplicates.doctors.includes(option.label)) {
+      return option.label === value && option.id === formValues.patient_id;
+    } else {
       return option.label === value;
-    // }
+    }
   }
 
 
