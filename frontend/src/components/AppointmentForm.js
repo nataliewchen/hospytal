@@ -28,42 +28,44 @@ const AppointmentForm = ({mode}) => {
   const [ allDoctors, setAllDoctors ] = useState([]);
   const [ formErrors, setFormErrors ] = useState(fieldDefaults(false));
   const [ formIsValid, setFormIsValid ] = useState(false);
-  // const [ datePickerOpen, setDatePickerOpen ] = useState(false);
   const [ dateRef, setDateRef ] = useState({
     open: null,
     clickaway: null
   });
+  const [ duplicates, setDuplicates ] = useState({});
 
-
-  const getAllPatients = async() => {
-    const response = await axios.get('/api/patients');
-    const patients = [{ label: '', id: null }];
-    response.data.forEach(patient => {
-      patients.push({
-        label: patient.firstname + ' ' + patient.lastname,
-        id: patient.id,
+  const getAll = async(type) => {
+    const response = await axios.get(`/api/${type}`);
+    const all = [{label: '', id: null}];
+    const duplicates = [];
+    response.data.forEach(person => {
+      const fullname = person.firstname + ' ' + person.lastname;
+      all.push({
+        label: fullname,
+        id: person.id
       });
-    });
-    setAllPatients(patients);
-  }
 
-  const getAllDoctors = async() => {
-    const response = await axios.get('/api/doctors');
-    const doctors = [{label: '', id: null}];
-    response.data.forEach(doctor => {
-      doctors.push({
-        label: doctor.firstname + ' ' + doctor.lastname,
-        id: doctor.id
-      })
+      const duplicate = all.findIndex(person => person.label === fullname);
+      if (duplicate !== all.length-1) {
+        duplicates.push(fullname);
+      }
     });
-    setAllDoctors(doctors);
+
+    if (type === 'patients') {
+      setAllPatients(all);
+    } else if (type === 'doctors') {
+      setAllDoctors(all);
+    }
+    setDuplicates(prev => ({ ...prev, [type]: duplicates }));
   }
 
   const populateFormfromAppt = async() => {
     const response = await axios.get(`/api/appointments/${id}`);
     setFormValues({
       ...response.data,
-      date: toJSDate(response.data.date)
+      date: toJSDate(response.data.date),
+      patient_id: Number(response.data.patient_id),
+      doctor_id: Number(response.data.doctor_id)
     });
   }
 
@@ -83,8 +85,8 @@ const AppointmentForm = ({mode}) => {
   }
 
   useEffect(() => {
-    getAllPatients();
-    getAllDoctors();
+    getAll('patients');
+    getAll('doctors');
 
     if (mode === 'Update') {
       populateFormfromAppt();
@@ -188,21 +190,25 @@ const AppointmentForm = ({mode}) => {
     }
   }
 
-  const checkDoctorEquality = (option, value) => {
-    if (formValues.doctor_id) {
-      return option.label === value && option.id === formValues.doctor_id;
-    } else {
-      return option.label === value;
-    }
-  }
-
   const checkPatientEquality = (option, value) => {
-    if (formValues.patient_id) {
+    if (duplicates.patients.includes(option.label)) {
+      console.log('option', option.label, 'value', value, option.label === value);
+      console.log(String(option.id), formValues.patient_id, option.id === formValues.patient_id);
       return option.label === value && option.id === formValues.patient_id;
     } else {
       return option.label === value;
     }
   }
+
+  const checkDoctorEquality = (option, value) => {
+    // if (formValues.doctor_id) {
+    //   return option.label === value && String(option.id) === formValues.doctor_id;
+    // } else {
+      return option.label === value;
+    // }
+  }
+
+
 
   let apptTimes = [];
   const getTimes= () => {
