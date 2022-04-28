@@ -55,7 +55,9 @@ li,
 .MuiPaper-root,
 .MuiAlert-message,
 .MuiSelect-select,
-.MuiFormLabel-root {
+.MuiFormLabel-root,
+.MuiTablePagination-selectLabel,
+.MuiTablePagination-displayedRows {
   font-family: $font !important;
   font-weight: 600 !important;
 }
@@ -131,7 +133,7 @@ li {
 .appt-dialog .MuiDialog-container  {
   height: auto !important;
   position: relative !important;
-  top: 50px !important;
+  //top: 50px !important;
 }
 
 .MuiPaper-root {
@@ -139,7 +141,12 @@ li {
 }
 
 .MuiDialogContent-root {
-  overflow-y: hidden !important;
+ overflow-y: hidden !important;
+}
+
+.person-dialog .MuiBox-root, 
+.appt-dialog .MuiBox-root {
+  padding: 0 !important;
 }
 
 
