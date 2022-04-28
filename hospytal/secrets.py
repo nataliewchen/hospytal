@@ -1,0 +1,1 @@
+SECRET_KEY = 'django-insecure-qr#txllv3fba_=&d&)%q(p_9&ho@z-pomr3^6+b+0u%9m$_nt2'
